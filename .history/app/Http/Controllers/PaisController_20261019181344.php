@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Pais;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+
+class PaisController extends Controller
+{
+    public function index(Request $request)
+    {
+        // 1. Búsqueda
+        $buscar = trim($request->input('buscar', ''));
+
+        // 2. Ordenamiento (validado por seguridad)
+        $orden = $request->input('orden', 'nombre');
+        $direccion = $request->input('direccion', 'asc');
+        $camposPermitidos = ['nombre', 'codigo_iso', 'codigo_iso3'];
+
+        if (!in_array($orden, $camposPermitidos, true)) {
+            $orden = 'nombre';
+        }
+        if (!in_array($direccion, ['asc', 'desc'], true)) {
+            $direccion = 'asc';
+        }
+
+        // 3. Paginación (validado)
+        $porPagina = (int) $request->input('por_pagina', 5);
+        if (!in_array($porPagina, [5, 10, 20], true)) {
+            $porPagina = 5;
+        }
+
+        // 4. Consulta Eloquent
+        $paises = Pais::query()
+            ->where('estado', true) // Solo mostramos activos
+            ->when($buscar != '', function ($query) use ($buscar) {
+                $query->where('nombre', 'like', "%{$buscar}%");
+            })
+            ->orderBy($orden, $direccion)
+            ->paginate($porPagina)
+            ->withQueryString(); // Conserva filtros en los enlaces de paginación
+
+        return Inertia::render('Paises/Index', [
+            'paises' => $paises,
+            'filtros' => [
+                'buscar' => $buscar,
+                'orden' => $orden,
+                'direccion' => $direccion,
+                'por_pagina' => $porPagina,
+            ]
+        ]);
+    }
+
+    // ... (los demás métodos store, update, destroy se mantienen igual)
+}
