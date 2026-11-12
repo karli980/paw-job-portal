@@ -1,31 +1,47 @@
+
 import { Head } from '@inertiajs/react';
+
 import AppearanceTabs from '@/components/appearance-tabs';
 import Heading from '@/components/heading';
+
 import { edit as editAppearance } from '@/routes/appearance';
+
+// --------------------------------------------------
+// CONFIGURACIÓN DE APARIENCIA
+// --------------------------------------------------
 
 export default function Appearance() {
     return (
         <>
-            <Head title="Appearance settings" />
+            <Head title="Apariencia" />
 
-            <h1 className="sr-only">Appearance settings</h1>
+            <h1 className="sr-only">
+                Configuración de apariencia
+            </h1>
 
             <div className="space-y-6">
+                {/* ENCABEZADO */}
                 <Heading
                     variant="small"
-                    title="Appearance settings"
-                    description="Update the appearance settings for your account"
+                    title="Apariencia"
+                    description="Personalizá la apariencia de Talent Match seleccionando el tema visual que prefieras."
                 />
+
+                {/* SELECTOR DE TEMA */}
                 <AppearanceTabs />
             </div>
         </>
     );
 }
 
+// --------------------------------------------------
+// BREADCRUMBS
+// --------------------------------------------------
+
 Appearance.layout = {
     breadcrumbs: [
         {
-            title: 'Appearance settings',
+            title: 'Apariencia',
             href: editAppearance(),
         },
     ],

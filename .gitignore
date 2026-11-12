@@ -42,3 +42,9 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+# Protección de variables de entorno
+.env.*
+!.env.example
+
+# Historial local del editor
+.history/

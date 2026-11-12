@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class ModalidadTrabajo extends Model
 {
     use HasFactory;
-    protected $table = 'modalidades_trabajo';
+
+    protected $table = 'modalidades_trabajos';
 
     protected $fillable = [
         'nombre',
@@ -22,4 +23,3 @@ class ModalidadTrabajo extends Model
         ];
     }
 }
-

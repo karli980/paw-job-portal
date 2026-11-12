@@ -1,6 +1,5 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,11 @@ type PageProps = {
 
 export default function Profile() {
     const { auth } = usePage<PageProps>().props;
+    const usuario = auth.user;
+
+    if (!usuario) {
+        return null;
+    }
 
     return (
         <>
@@ -44,7 +48,7 @@ export default function Profile() {
                                 <Input
                                     id="nombre"
                                     name="nombre"
-                                    defaultValue={auth.user.nombre}
+                                    defaultValue={usuario.nombre}
                                     required
                                     autoComplete="given-name"
                                     placeholder="Tu nombre"
@@ -59,7 +63,7 @@ export default function Profile() {
                                 <Input
                                     id="apellido"
                                     name="apellido"
-                                    defaultValue={auth.user.apellido}
+                                    defaultValue={usuario.apellido}
                                     required
                                     autoComplete="family-name"
                                     placeholder="Tu apellido"
@@ -77,7 +81,7 @@ export default function Profile() {
                                     id="email"
                                     type="email"
                                     name="email"
-                                    defaultValue={auth.user.email}
+                                    defaultValue={usuario.email}
                                     required
                                     autoComplete="email"
                                     placeholder="correo@ejemplo.com"
@@ -99,7 +103,7 @@ export default function Profile() {
                 </Form>
             </div>
 
-            <DeleteUser />
+            
         </>
     );
 }

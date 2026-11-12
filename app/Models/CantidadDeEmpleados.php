@@ -3,18 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-//use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CantidadDeEmpleados extends Model
 {
     use HasFactory;
+
     protected $table = 'cantidad_de_empleados';
 
     protected $fillable = [
         'nombre',
         'minimo',
         'maximo',
+        'estado',
     ];
 
     protected function casts(): array
@@ -22,8 +23,7 @@ class CantidadDeEmpleados extends Model
         return [
             'minimo' => 'integer',
             'maximo' => 'integer',
+            'estado' => 'boolean',
         ];
     }
-
-
 }

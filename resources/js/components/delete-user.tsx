@@ -1,10 +1,15 @@
+
 import { Form } from '@inertiajs/react';
 import { useRef } from 'react';
+
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
+
 import { Button } from '@/components/ui/button';
+
 import {
     Dialog,
     DialogClose,
@@ -14,99 +19,160 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/use-auth';
+
+// --------------------------------------------------
+// ELIMINACIÓN DE CUENTA - TALENT MATCH
+// --------------------------------------------------
 
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
 
+    const { hasRole, hasAnyRole } = useAuth();
+
+    // ----------------------------------------------
+    // CONTROL DE VISIBILIDAD
+    // ----------------------------------------------
+
+    const esCuentaAdministrativa = hasAnyRole([
+        'super-admin',
+        'admin',
+        'moderador',
+    ]);
+
+    const esRepresentanteEmpresa = hasRole(
+        'representante_empresa',
+    );
+
+    const esCandidato = hasRole('candidato');
+
+    // Solamente los candidatos pueden visualizar
+    // la opción de eliminar su propia cuenta.
+    const puedeEliminarCuenta =
+        esCandidato &&
+        !esCuentaAdministrativa &&
+        !esRepresentanteEmpresa;
+
+    if (!puedeEliminarCuenta) {
+        return null;
+    }
+
+    // ----------------------------------------------
+    // RENDERIZADO
+    // ----------------------------------------------
+
     return (
         <div className="space-y-6">
+            {/* ENCABEZADO */}
             <Heading
                 variant="small"
-                title="Delete account"
-                description="Delete your account and all of its resources"
+                title="Eliminar cuenta"
+                description="Solicitá la eliminación de tu cuenta de Talent Match."
             />
-            <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Warning</p>
+
+            {/* ZONA DE ADVERTENCIA */}
+            <div className="space-y-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
+                <div className="space-y-1 text-red-700 dark:text-red-100">
+                    <p className="font-semibold">
+                        Advertencia
+                    </p>
+
                     <p className="text-sm">
-                        Please proceed with caution, this cannot be undone.
+                        Esta acción puede ser irreversible.
+                        Antes de continuar, asegurate de
+                        comprender qué información será
+                        eliminada de tu cuenta.
                     </p>
                 </div>
 
+                {/* DIÁLOGO DE CONFIRMACIÓN */}
                 <Dialog>
                     <DialogTrigger asChild>
                         <Button
+                            type="button"
                             variant="destructive"
                             data-test="delete-user-button"
                         >
-                            Delete account
+                            Eliminar mi cuenta
                         </Button>
                     </DialogTrigger>
+
                     <DialogContent>
                         <DialogTitle>
-                            Are you sure you want to delete your account?
+                            ¿Estás seguro de que querés
+                            eliminar tu cuenta?
                         </DialogTitle>
+
                         <DialogDescription>
-                            Once your account is deleted, all of its resources
-                            and data will also be permanently deleted. Please
-                            enter your password to confirm you would like to
-                            permanently delete your account.
+                            Estás por solicitar la eliminación
+                            de tu cuenta de Talent Match.
+
+                            Para confirmar esta operación,
+                            ingresá tu contraseña actual.
                         </DialogDescription>
 
+                        {/* FORMULARIO */}
                         <Form
                             {...ProfileController.destroy.form()}
                             options={{
                                 preserveScroll: true,
                             }}
-                            onError={() => passwordInput.current?.focus()}
+                            onError={() =>
+                                passwordInput.current?.focus()
+                            }
                             resetOnSuccess
                             className="space-y-6"
                         >
-                            {({ resetAndClearErrors, processing, errors }) => (
+                            {({
+                                resetAndClearErrors,
+                                processing,
+                                errors,
+                            }) => (
                                 <>
+                                    {/* CONTRASEÑA */}
                                     <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="password"
-                                            className="sr-only"
-                                        >
-                                            Password
+                                        <Label htmlFor="password">
+                                            Contraseña actual
                                         </Label>
 
                                         <PasswordInput
                                             id="password"
                                             name="password"
                                             ref={passwordInput}
-                                            placeholder="Password"
+                                            placeholder="Ingresá tu contraseña"
                                             autoComplete="current-password"
                                         />
 
-                                        <InputError message={errors.password} />
+                                        <InputError
+                                            message={errors.password}
+                                        />
                                     </div>
 
+                                    {/* BOTONES */}
                                     <DialogFooter className="gap-2">
                                         <DialogClose asChild>
                                             <Button
+                                                type="button"
                                                 variant="secondary"
                                                 onClick={() =>
                                                     resetAndClearErrors()
                                                 }
                                             >
-                                                Cancel
+                                                Cancelar
                                             </Button>
                                         </DialogClose>
 
                                         <Button
+                                            type="submit"
                                             variant="destructive"
                                             disabled={processing}
-                                            asChild
+                                            data-test="confirm-delete-user-button"
                                         >
-                                            <button
-                                                type="submit"
-                                                data-test="confirm-delete-user-button"
-                                            >
-                                                Delete account
-                                            </button>
+                                            {processing
+                                                ? 'Eliminando...'
+                                                : 'Confirmar eliminación'}
                                         </Button>
                                     </DialogFooter>
                                 </>
