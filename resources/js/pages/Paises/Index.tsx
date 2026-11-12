@@ -1,11 +1,11 @@
-
 import { Link, router } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import {
     Search,
     Plus,
+    Eye,
     Pencil,
-    Trash2,
+    CircleOff,
     ArrowUp,
     ArrowDown,
     ArrowUpDown,
@@ -38,6 +38,7 @@ interface Pais {
     nombre: string;
     codigo_iso: string;
     codigo_iso3: string;
+    estado: boolean;
 }
 
 interface PaginationLink {
@@ -159,27 +160,41 @@ export default function Index({ paises, filtros, flash }: Props) {
     const indicadorOrden = (campo: string) => {
         if (orden !== campo) {
             return (
-                <ArrowUpDown className="ml-2 h-3.5 w-3.5 text-slate-400" />
+                <ArrowUpDown className="ml-2 h-3.5 w-3.5 text-muted-foreground/60" />
             );
         }
 
         return direccion === 'asc' ? (
-            <ArrowUp className="ml-2 h-3.5 w-3.5 text-indigo-600" />
+            <ArrowUp className="ml-2 h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
         ) : (
-            <ArrowDown className="ml-2 h-3.5 w-3.5 text-indigo-600" />
+            <ArrowDown className="ml-2 h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
         );
     };
 
-    // Eliminar país.
-    const eliminar = (id: number, nombre: string) => {
+    // Valor aria-sort para cada columna.
+    const ariaOrden = (campo: string) =>
+        orden !== campo
+            ? 'none'
+            : direccion === 'asc'
+              ? 'ascending'
+              : 'descending';
+
+    // Activar o desactivar país sin eliminarlo.
+    const cambiarEstado = (pais: Pais) => {
+        const accion = pais.estado ? 'desactivar' : 'activar';
+
         if (
             confirm(
-                `¿Estás seguro de que deseas eliminar el país "${nombre}"?`,
+                `¿Estás seguro de que deseas ${accion} el país "${pais.nombre}"?`,
             )
         ) {
-            router.delete(`/paises/${id}`, {
-                preserveScroll: true,
-            });
+            router.patch(
+                `/paises/${pais.id}/estado`,
+                {},
+                {
+                    preserveScroll: true,
+                },
+            );
         }
     };
 
@@ -187,25 +202,27 @@ export default function Index({ paises, filtros, flash }: Props) {
     const estilosFlash = {
         created: {
             container:
-                'border-emerald-200 bg-emerald-50 text-emerald-900',
+                'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100',
             icon: (
-                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
             ),
             titulo: 'País creado',
         },
         updated: {
-            container: 'border-indigo-200 bg-indigo-50 text-indigo-900',
+            container:
+                'border-indigo-200 bg-indigo-50 text-indigo-900 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-100',
             icon: (
-                <Info className="h-5 w-5 shrink-0 text-indigo-600" />
+                <Info className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
             ),
-            titulo: 'Cambios guardados',
+            titulo: 'País activado o actualizado',
         },
         deleted: {
-            container: 'border-rose-200 bg-rose-50 text-rose-900',
+            container:
+                'border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100',
             icon: (
-                <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600" />
+                <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
             ),
-            titulo: 'País eliminado',
+            titulo: 'País desactivado',
         },
     };
 
@@ -213,30 +230,32 @@ export default function Index({ paises, filtros, flash }: Props) {
         ? estilosFlash[flash.success.type]
         : null;
 
-    // Laravel puede incluir Previous y Next en inglés
-    // aunque la aplicación se muestre en español.
+    // Traducción de Previous y Next.
     const esAnterior = (label: string) =>
         /previous|anterior/i.test(label);
 
     const esSiguiente = (label: string) =>
         /next|siguiente/i.test(label);
 
-    return (
-        <div className="min-h-full bg-slate-50/70">
-            <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    // Estilos de los botones para ordenar columnas.
+    const claseBotonOrden =
+        'inline-flex items-center rounded-md px-1 py-1 -ml-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:text-indigo-300';
 
+    return (
+        <div className="min-h-full bg-muted/30">
+            <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
                 {/* CABECERA */}
                 <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
                     <div className="flex items-start gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200/70">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200/70 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-indigo-400/20">
                             <Globe2 className="h-6 w-6" />
                         </div>
 
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                                 Países
                             </h1>
-                            <p className="mt-1 max-w-xl text-sm text-slate-500">
+                            <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
                                 Administra los países y sus códigos
                                 internacionales ISO.
                             </p>
@@ -245,11 +264,11 @@ export default function Index({ paises, filtros, flash }: Props) {
 
                     <Button
                         asChild
-                        className="h-10 rounded-lg bg-indigo-600 px-4 font-medium shadow-sm transition-colors hover:bg-indigo-700"
+                        className="h-10 w-full rounded-lg bg-indigo-600 px-4 font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto dark:bg-indigo-500 dark:hover:bg-indigo-400"
                     >
                         <Link
                             href="/paises/create"
-                            className="inline-flex items-center gap-2"
+                            className="inline-flex items-center justify-center gap-2"
                         >
                             <Plus className="h-4 w-4" />
                             Nuevo país
@@ -269,7 +288,7 @@ export default function Index({ paises, filtros, flash }: Props) {
                             <p className="text-sm font-semibold">
                                 {notificacion.titulo}
                             </p>
-                            <p className="mt-0.5 text-sm">
+                            <p className="mt-0.5 text-sm opacity-90">
                                 {flash.success.message}
                             </p>
                         </div>
@@ -277,21 +296,22 @@ export default function Index({ paises, filtros, flash }: Props) {
                 )}
 
                 {/* PANEL DE BÚSQUEDA */}
-                <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                <section className="rounded-xl border border-border bg-card p-5 shadow-sm sm:p-6">
                     <form
                         onSubmit={aplicarFiltros}
-                        className="flex flex-col gap-4 lg:flex-row lg:items-end"
+                        className="flex flex-col gap-5 xl:flex-row xl:items-end xl:gap-6"
                     >
-                        <div className="flex-1 space-y-2">
+                        {/* Campo de búsqueda */}
+                        <div className="w-full space-y-3 xl:max-w-md xl:flex-1">
                             <label
                                 htmlFor="buscar-pais"
-                                className="text-sm font-semibold text-slate-700"
+                                className="block text-sm font-semibold text-foreground"
                             >
                                 Buscar país
                             </label>
 
                             <div className="relative">
-                                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
                                 <Input
                                     id="buscar-pais"
@@ -300,8 +320,8 @@ export default function Index({ paises, filtros, flash }: Props) {
                                     onChange={(e) =>
                                         setBuscar(e.target.value)
                                     }
-                                    placeholder="Escribe un nombre o código ISO..."
-                                    className="h-10 rounded-lg border-slate-200 pl-9 pr-10 transition-shadow focus-visible:ring-indigo-500"
+                                    placeholder="Nombre o código ISO..."
+                                    className="h-10 w-full rounded-lg border-border bg-background pl-9 pr-10 transition-shadow focus-visible:ring-indigo-500"
                                 />
 
                                 {buscar && (
@@ -309,7 +329,7 @@ export default function Index({ paises, filtros, flash }: Props) {
                                         type="button"
                                         onClick={limpiarBusqueda}
                                         aria-label="Limpiar búsqueda"
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
+                                        className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                                     >
                                         <X className="h-4 w-4" />
                                     </button>
@@ -317,10 +337,11 @@ export default function Index({ paises, filtros, flash }: Props) {
                             </div>
                         </div>
 
-                        <div className="space-y-2 lg:w-44">
+                        {/* Cantidad de registros */}
+                        <div className="w-full space-y-3 sm:max-w-xs xl:w-48 xl:shrink-0">
                             <label
                                 htmlFor="por-pagina"
-                                className="text-sm font-semibold text-slate-700"
+                                className="block text-sm font-semibold text-foreground"
                             >
                                 Registros por página
                             </label>
@@ -331,7 +352,7 @@ export default function Index({ paises, filtros, flash }: Props) {
                                 onChange={(e) =>
                                     setPorPagina(Number(e.target.value))
                                 }
-                                className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-shadow focus:ring-2 focus:ring-indigo-500"
+                                className="flex h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition-shadow focus:ring-2 focus:ring-indigo-500"
                             >
                                 <option value={5}>5 registros</option>
                                 <option value={10}>10 registros</option>
@@ -339,29 +360,44 @@ export default function Index({ paises, filtros, flash }: Props) {
                             </select>
                         </div>
 
-                        <Button
-                            type="submit"
-                            className="h-10 rounded-lg bg-slate-900 px-5 font-medium hover:bg-slate-800"
-                        >
-                            <Search className="mr-2 h-4 w-4" />
-                            Buscar
-                        </Button>
+                        {/* Acciones */}
+                        <div className="flex flex-wrap gap-3 xl:shrink-0">
+                            <Button
+                                type="submit"
+                                className="h-10 rounded-lg bg-indigo-600 px-5 font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                            >
+                                <Search className="mr-2 h-4 w-4" />
+                                Buscar
+                            </Button>
+
+                            {buscar && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={limpiarBusqueda}
+                                    className="h-10 rounded-lg border-border px-4 font-medium focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                >
+                                    <X className="mr-2 h-4 w-4" />
+                                    Limpiar
+                                </Button>
+                            )}
+                        </div>
                     </form>
                 </section>
 
                 {/* TABLA */}
-                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <div className="flex flex-col gap-1 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <section className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                    <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h2 className="font-semibold text-slate-900">
+                            <h2 className="text-base font-semibold text-foreground">
                                 Listado de países
                             </h2>
-                            <p className="mt-1 text-sm text-slate-500">
+                            <p className="mt-0.5 text-sm text-muted-foreground">
                                 Consulta y administra los registros.
                             </p>
                         </div>
 
-                        <span className="inline-flex w-fit items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-100">
+                        <span className="inline-flex w-fit items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold tabular-nums text-indigo-700 ring-1 ring-inset ring-indigo-100 dark:bg-indigo-500/15 dark:text-indigo-300 dark:ring-indigo-400/20">
                             {paises.total}{' '}
                             {paises.total === 1 ? 'país' : 'países'}
                         </span>
@@ -370,45 +406,58 @@ export default function Index({ paises, filtros, flash }: Props) {
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
-                                <TableRow className="border-slate-200 bg-slate-50/80 hover:bg-slate-50/80">
-                                    <TableHead className="h-12 min-w-48 pl-5">
+                                <TableRow className="border-b border-border bg-muted/60 shadow-[inset_0_-1px_0_0_var(--color-border,transparent)] hover:bg-muted/60">
+                                    <TableHead
+                                        aria-sort={ariaOrden('nombre')}
+                                        className="h-12 min-w-48 pl-5"
+                                    >
                                         <button
                                             type="button"
                                             onClick={() => ordenarPor('nombre')}
-                                            className="inline-flex items-center font-semibold text-slate-700 transition-colors hover:text-indigo-700"
+                                            className={claseBotonOrden}
                                         >
                                             Nombre
                                             {indicadorOrden('nombre')}
                                         </button>
                                     </TableHead>
 
-                                    <TableHead className="h-12 min-w-32">
+                                    <TableHead
+                                        aria-sort={ariaOrden('codigo_iso')}
+                                        className="h-12 min-w-32"
+                                    >
                                         <button
                                             type="button"
                                             onClick={() =>
                                                 ordenarPor('codigo_iso')
                                             }
-                                            className="inline-flex items-center font-semibold text-slate-700 transition-colors hover:text-indigo-700"
+                                            className={claseBotonOrden}
                                         >
                                             Código ISO
                                             {indicadorOrden('codigo_iso')}
                                         </button>
                                     </TableHead>
 
-                                    <TableHead className="h-12 min-w-32">
+                                    <TableHead
+                                        aria-sort={ariaOrden('codigo_iso3')}
+                                        className="h-12 min-w-32"
+                                    >
                                         <button
                                             type="button"
                                             onClick={() =>
                                                 ordenarPor('codigo_iso3')
                                             }
-                                            className="inline-flex items-center font-semibold text-slate-700 transition-colors hover:text-indigo-700"
+                                            className={claseBotonOrden}
                                         >
                                             Código ISO 3
                                             {indicadorOrden('codigo_iso3')}
                                         </button>
                                     </TableHead>
 
-                                    <TableHead className="h-12 pr-5 text-right font-semibold text-slate-700">
+                                    <TableHead className="h-12 min-w-28 text-center text-sm font-semibold text-muted-foreground">
+                                        Estado
+                                    </TableHead>
+
+                                    <TableHead className="h-12 pr-5 text-right text-sm font-semibold text-muted-foreground">
                                         Acciones
                                     </TableHead>
                                 </TableRow>
@@ -416,21 +465,21 @@ export default function Index({ paises, filtros, flash }: Props) {
 
                             <TableBody>
                                 {paises.data.length === 0 ? (
-                                    <TableRow>
+                                    <TableRow className="hover:bg-transparent">
                                         <TableCell
-                                            colSpan={4}
-                                            className="h-56 text-center"
+                                            colSpan={5}
+                                            className="h-64 text-center"
                                         >
                                             <div className="flex flex-col items-center justify-center gap-3">
-                                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                                                    <Search className="h-5 w-5 text-slate-400" />
+                                                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-border bg-muted">
+                                                    <Search className="h-5 w-5 text-muted-foreground" />
                                                 </div>
 
                                                 <div>
-                                                    <p className="font-semibold text-slate-800">
+                                                    <p className="font-semibold text-foreground">
                                                         No se encontraron países
                                                     </p>
-                                                    <p className="mt-1 text-sm text-slate-500">
+                                                    <p className="mt-1 text-sm text-muted-foreground">
                                                         Prueba con otro nombre
                                                         o código ISO.
                                                     </p>
@@ -442,7 +491,7 @@ export default function Index({ paises, filtros, flash }: Props) {
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={limpiarBusqueda}
-                                                        className="mt-1"
+                                                        className="mt-1 focus-visible:ring-2 focus-visible:ring-indigo-500"
                                                     >
                                                         Limpiar búsqueda
                                                     </Button>
@@ -454,60 +503,119 @@ export default function Index({ paises, filtros, flash }: Props) {
                                     paises.data.map((pais) => (
                                         <TableRow
                                             key={pais.id}
-                                            className="border-slate-100 transition-colors hover:bg-indigo-50/40"
+                                            className="group border-border/60 transition-colors odd:bg-transparent even:bg-muted/30 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10"
                                         >
-                                            <TableCell className="py-4 pl-5 font-medium text-slate-900">
+                                            <TableCell className="py-3.5 pl-5">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors group-hover:bg-indigo-100">
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700 dark:group-hover:bg-indigo-500/20 dark:group-hover:text-indigo-300">
                                                         <Globe2 className="h-4 w-4" />
                                                     </div>
-                                                    <span>{pais.nombre}</span>
+
+                                                    <span className="text-sm font-semibold text-foreground sm:text-[0.95rem]">
+                                                        {pais.nombre}
+                                                    </span>
                                                 </div>
                                             </TableCell>
 
-                                            <TableCell className="py-4">
-                                                <span className="inline-flex min-w-12 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 px-2.5 py-1 font-mono text-xs font-semibold tracking-wide text-indigo-700">
+                                            <TableCell className="py-3.5">
+                                                <span className="inline-flex min-w-12 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 px-2.5 py-1 font-mono text-xs font-semibold tracking-wide text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-500/15 dark:text-indigo-300">
                                                     {pais.codigo_iso}
                                                 </span>
                                             </TableCell>
 
-                                            <TableCell className="py-4">
-                                                <span className="inline-flex min-w-14 items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-mono text-xs font-semibold tracking-wide text-slate-700">
+                                            <TableCell className="py-3.5">
+                                                <span className="inline-flex min-w-14 items-center justify-center rounded-md border border-border bg-muted px-2.5 py-1 font-mono text-xs font-semibold tracking-wide text-muted-foreground">
                                                     {pais.codigo_iso3}
                                                 </span>
                                             </TableCell>
 
-                                            <TableCell className="py-4 pr-5">
+                                            {/* ESTADO */}
+                                            <TableCell className="py-3.5 text-center">
+                                                <span
+                                                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                                        pais.estado
+                                                            ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20'
+                                                            : 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20'
+                                                    }`}
+                                                >
+                                                    <span
+                                                        className={`h-1.5 w-1.5 rounded-full ${
+                                                            pais.estado
+                                                                ? 'bg-emerald-500'
+                                                                : 'bg-rose-500'
+                                                        }`}
+                                                    />
+                                                    {pais.estado
+                                                        ? 'Activo'
+                                                        : 'Inactivo'}
+                                                </span>
+                                            </TableCell>
+
+                                            {/* ACCIONES */}
+                                            <TableCell className="py-3.5 pr-5">
                                                 <div className="flex items-center justify-end gap-1.5">
+                                                    {/* VER DETALLE */}
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
                                                         asChild
-                                                        className="h-9 rounded-lg border-slate-200 px-3 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                                                        className="h-9 rounded-lg border-border px-2.5 text-foreground hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500 sm:px-3 dark:hover:border-indigo-400/30 dark:hover:bg-indigo-500/15 dark:hover:text-indigo-300"
+                                                    >
+                                                        <Link
+                                                            href={`/paises/${pais.id}`}
+                                                            aria-label={`Ver detalle de ${pais.nombre}`}
+                                                            title="Ver detalle"
+                                                        >
+                                                            <Eye className="h-3.5 w-3.5 sm:mr-1.5" />
+                                                            <span className="hidden sm:inline">
+                                                                Ver
+                                                            </span>
+                                                        </Link>
+                                                    </Button>
+
+                                                    {/* EDITAR */}
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        asChild
+                                                        className="h-9 rounded-lg border-border px-2.5 text-foreground hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500 sm:px-3 dark:hover:border-indigo-400/30 dark:hover:bg-indigo-500/15 dark:hover:text-indigo-300"
                                                     >
                                                         <Link
                                                             href={`/paises/${pais.id}/edit`}
                                                             aria-label={`Editar ${pais.nombre}`}
                                                         >
-                                                            <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                                                            Editar
+                                                            <Pencil className="h-3.5 w-3.5 sm:mr-1.5" />
+                                                            <span className="hidden sm:inline">
+                                                                Editar
+                                                            </span>
                                                         </Link>
                                                     </Button>
 
+                                                    {/* ACTIVAR / DESACTIVAR */}
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() =>
-                                                            eliminar(
-                                                                pais.id,
-                                                                pais.nombre,
-                                                            )
+                                                            cambiarEstado(pais)
                                                         }
-                                                        aria-label={`Eliminar ${pais.nombre}`}
-                                                        className="h-9 rounded-lg px-3 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                                        aria-label={`${pais.estado ? 'Desactivar' : 'Activar'} ${pais.nombre}`}
+                                                        className={
+                                                            pais.estado
+                                                                ? 'h-9 rounded-lg px-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 focus-visible:ring-2 focus-visible:ring-rose-500 sm:px-3 dark:text-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-300'
+                                                                : 'h-9 rounded-lg px-2.5 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-3 dark:text-emerald-400 dark:hover:bg-emerald-500/15 dark:hover:text-emerald-300'
+                                                        }
                                                     >
-                                                        <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                                                        Eliminar
+                                                        {pais.estado ? (
+                                                            <CircleOff className="h-3.5 w-3.5 sm:mr-1.5" />
+                                                        ) : (
+                                                            <CheckCircle2 className="h-3.5 w-3.5 sm:mr-1.5" />
+                                                        )}
+
+                                                        <span className="hidden sm:inline">
+                                                            {pais.estado
+                                                                ? 'Desactivar'
+                                                                : 'Activar'}
+                                                        </span>
                                                     </Button>
                                                 </div>
                                             </TableCell>
@@ -519,18 +627,18 @@ export default function Index({ paises, filtros, flash }: Props) {
                     </div>
 
                     {/* PAGINACIÓN */}
-                    <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-sm text-slate-500">
+                    <div className="flex flex-col gap-4 border-t border-border bg-muted/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-center text-sm text-muted-foreground sm:text-left">
                             Mostrando{' '}
-                            <span className="font-semibold text-slate-800">
+                            <span className="font-semibold tabular-nums text-foreground">
                                 {paises.from ?? 0}
                             </span>{' '}
                             a{' '}
-                            <span className="font-semibold text-slate-800">
+                            <span className="font-semibold tabular-nums text-foreground">
                                 {paises.to ?? 0}
                             </span>{' '}
                             de{' '}
-                            <span className="font-semibold text-slate-800">
+                            <span className="font-semibold tabular-nums text-foreground">
                                 {paises.total}
                             </span>{' '}
                             registros
@@ -557,13 +665,25 @@ export default function Index({ paises, filtros, flash }: Props) {
                                     )
                                 }
                                 aria-label="Página anterior"
-                                className="h-9 rounded-lg border-slate-200 bg-white px-3"
+                                className="h-9 rounded-lg border-border bg-background px-3 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                                 <span className="hidden sm:inline">
                                     Anterior
                                 </span>
                             </Button>
+
+                            {/* Indicador compacto solo en móvil */}
+                            <span className="px-3 text-sm tabular-nums text-muted-foreground sm:hidden">
+                                Página{' '}
+                                <span className="font-semibold text-foreground">
+                                    {paises.current_page}
+                                </span>{' '}
+                                de{' '}
+                                <span className="font-semibold text-foreground">
+                                    {paises.last_page}
+                                </span>
+                            </span>
 
                             {paises.links?.map((link, index) => {
                                 if (
@@ -577,7 +697,7 @@ export default function Index({ paises, filtros, flash }: Props) {
                                     return (
                                         <span
                                             key={`${link.label}-${index}`}
-                                            className="px-2 text-sm text-slate-400"
+                                            className="hidden px-2 text-sm text-muted-foreground sm:inline"
                                         >
                                             {link.label.replace(/&hellip;/g, '…')}
                                         </span>
@@ -609,8 +729,8 @@ export default function Index({ paises, filtros, flash }: Props) {
                                         }
                                         className={
                                             link.active
-                                                ? 'h-9 min-w-9 rounded-lg bg-indigo-600 px-3 text-white shadow-sm hover:bg-indigo-700'
-                                                : 'h-9 min-w-9 rounded-lg border-slate-200 bg-white px-3 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700'
+                                                ? 'hidden h-9 min-w-9 rounded-lg bg-indigo-600 px-3 tabular-nums text-white shadow-sm hover:bg-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex dark:bg-indigo-500 dark:hover:bg-indigo-400'
+                                                : 'hidden h-9 min-w-9 rounded-lg border-border bg-background px-3 tabular-nums text-foreground hover:bg-indigo-50 hover:text-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500 sm:inline-flex dark:hover:bg-indigo-500/15 dark:hover:text-indigo-300'
                                         }
                                     >
                                         {link.label}
@@ -635,7 +755,7 @@ export default function Index({ paises, filtros, flash }: Props) {
                                     )
                                 }
                                 aria-label="Página siguiente"
-                                className="h-9 rounded-lg border-slate-200 bg-white px-3"
+                                className="h-9 rounded-lg border-border bg-background px-3 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50"
                             >
                                 <span className="hidden sm:inline">
                                     Siguiente
@@ -646,7 +766,7 @@ export default function Index({ paises, filtros, flash }: Props) {
                     </div>
                 </section>
 
-                <p className="pb-2 text-center text-xs text-slate-400">
+                <p className="pb-2 text-center text-xs text-muted-foreground">
                     Gestión de países · Job Portal
                 </p>
             </div>

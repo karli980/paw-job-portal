@@ -1,3 +1,4 @@
+import '@inertiajs/core';
 import type { Auth } from '@/types/auth';
 
 declare module 'react' {
@@ -12,7 +13,13 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            flash: {
+                success?: string | null;
+                [key: string]: unknown;
+            };
             [key: string]: unknown;
         };
     }
 }
+
+

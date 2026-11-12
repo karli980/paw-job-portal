@@ -1,15 +1,19 @@
 import { Link, router } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
+
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+
 import type { User } from '@/types';
 
 type Props = {
@@ -19,6 +23,10 @@ type Props = {
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
 
+    // ----------------------------------------------
+    // CERRAR SESIÓN
+    // ----------------------------------------------
+
     const handleLogout = () => {
         cleanup();
         router.flushAll();
@@ -26,12 +34,19 @@ export function UserMenuContent({ user }: Props) {
 
     return (
         <>
+            {/* INFORMACIÓN DEL USUARIO */}
             <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <UserInfo user={user} showEmail={true} />
+                    <UserInfo
+                        user={user}
+                        showEmail={true}
+                    />
                 </div>
             </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
+
+            {/* CONFIGURACIÓN */}
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
                     <Link
@@ -40,12 +55,15 @@ export function UserMenuContent({ user }: Props) {
                         prefetch
                         onClick={cleanup}
                     >
-                        <Settings className="mr-2" />
-                        Settings
+                        <Settings className="mr-2 size-4" />
+                        <span>Configuración</span>
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
+
+            {/* CERRAR SESIÓN */}
             <DropdownMenuItem asChild>
                 <Link
                     className="block w-full cursor-pointer"
@@ -54,8 +72,8 @@ export function UserMenuContent({ user }: Props) {
                     onClick={handleLogout}
                     data-test="logout-button"
                 >
-                    <LogOut className="mr-2" />
-                    Log out
+                    <LogOut className="mr-2 size-4" />
+                    <span>Cerrar sesión</span>
                 </Link>
             </DropdownMenuItem>
         </>
